@@ -1,10 +1,106 @@
 
-# Financiamiento ----------------------------------------------------------
-
 library(httr)
 library(jsonlite)
 library(dplyr)
 library(janitor)
+
+safely_get <- function(api_url) {
+  tryCatch(
+    {
+      # Execute the API request
+      response <- GET(api_url)
+      
+      # Check if the request was successful; if not, an error will be thrown
+      stop_for_status(response)
+      
+      # Other processing if needed
+      
+      # Return the response object or any specific value you need
+      return(response)
+    },
+    error = function(e) {
+      # Handle connection error or other exceptions
+      if (grepl("Failed to connect", e$message)) {
+        cat("Connection error: Unable to connect to the server.\n")
+        # Handle or return an appropriate value
+      } else {
+        # Handle other errors
+        stop(e)
+      }
+    }
+  )
+}
+
+#response <- safely_get(api_url)
+
+# API Constructor ---------------------------------------------------------
+
+
+# Function to get the SNIIV API URL by name
+get_sniiv_api_url <- function(api_name) {
+  
+  # Create the named list variable sniiv_apis_list with API URLs
+  sniiv_apis_list <- list(
+    financiamiento = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetFinanciamiento/%s/%s/%s/%s",
+    conavi = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetCONAVI/%s/%s/%s/%s",
+    fovisste = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetFOVISSSTE/%s/%s/%s/%s",
+    infonavit = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetINFONAVIT/%s/%s/%s/%s",
+    cnbv = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetCNBV/%s/%s/%s/%s",
+    insus = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetInsus/%s/%s/%s/%s",
+    fonhapo = "https://localhost:44369/api/CuboAPI/GetFONHAPO/%s/%s/%s/%s",
+    inventario = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetInventario/%s/%s/%s/%s",
+    registro = "https://sniiv.sedatu.gob.mx/api/CuboAPI/GetRegistro/%s/%s/%s/%s"
+  )
+  
+  
+  
+  if (api_name == "show") {
+    return(names(sniiv_apis_list))
+  } else if (api_name %in% names(sniiv_apis_list)) {
+    return(sniiv_apis_list[[api_name]])
+  } else {
+    stop("Invalid API name. Please provide a valid API name or use 'show' to display all API names.")
+  }
+  
+}
+
+# Example usage:
+#api_name <- "financiamiento"
+#api_url <- get_sniiv_api_url(api_name)
+#print(api_url)
+
+
+# Function to make a generic API call
+make_sniiv_api_call <- function(api_url) {
+  
+  # Execute the API request
+  response <- safely_get()
+  
+  # Check if the request was successful; if not, an error will be thrown
+  stop_for_status(response)
+  
+  # Parse JSON content into a variable
+  api_response_content <- rawToChar(response$content) |> 
+    fromJSON()
+  
+  # Check if the parsed content is a dataframe
+  if (is.data.frame(api_response_content) ) {
+    # If it's a dataframe, proceed with cleaning and arranging
+    df <- api_response_content |> 
+      clean_names() |> 
+      arrange(ano)
+  } else {
+    # If it's not a dataframe, return the original content
+    df <- api_response_content
+  }
+  
+  
+  return(df)
+}
+
+
+
+# Financiamiento ----------------------------------------------------------
 
 get_financiamiento_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
@@ -12,15 +108,7 @@ get_financiamiento_data <- function(anios, clave_estado, clave_municipio, dimens
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetFinanciamiento/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -48,25 +136,13 @@ get_financiamiento_data <- function(anios, clave_estado, clave_municipio, dimens
 
 # Conavi ------------------------------------------------------------------
 
-library(httr)
-library(jsonlite)
-library(dplyr)
-
 get_conavi_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
   # Construct the API URL
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetCONAVI/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -81,14 +157,7 @@ get_conavi_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
 # print(result_df_conavi)
 # 
 
-library(httr)
-library(jsonlite)
-library(dplyr)
-
-
 # Fovissste ----------------------------------------------------------------
-
-
 
 get_fovisste_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
@@ -96,34 +165,13 @@ get_fovisste_data <- function(anios, clave_estado, clave_municipio, dimensiones)
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetFOVISSSTE/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
 
-# # Example usage for the provided FOVISSSTE API parameters
-# anios <- "2020,2021"
-# clave_estado <- "08"
-# clave_municipio <- "005"
-# dimensiones <- "anio,municipio,genero"
-# 
-# result_df_fovisste <- get_fovisste_data(anios, clave_estado, clave_municipio, dimensiones)
-# print(result_df_fovisste)
-
 
 # Infonavit ----------------------------------------------------------------
-
-library(httr)
-library(jsonlite)
-library(dplyr)
 
 get_infonavit_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
@@ -131,15 +179,7 @@ get_infonavit_data <- function(anios, clave_estado, clave_municipio, dimensiones
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetINFONAVIT/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -156,25 +196,13 @@ get_infonavit_data <- function(anios, clave_estado, clave_municipio, dimensiones
 
 # CNBV --------------------------------------------------------------------
 
-library(httr)
-library(jsonlite)
-library(dplyr)
-
 get_cnbv_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
   # Construct the API URL
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetCNBV/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -189,11 +217,7 @@ get_cnbv_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
 # print(result_df_cnbv)
 
 
-# INSUS -------------------------------------------------------------------
-
-library(httr)
-library(jsonlite)
-library(dplyr)
+# INSUS ------------------------------------------------------------------
 
 get_insus_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
@@ -201,15 +225,7 @@ get_insus_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetInsus/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -226,25 +242,13 @@ get_insus_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
 
 # FONHAPO CONNECTION REFUSED (weird local host address) -----------------------------------------------------------------
 
-
-library(httr)
-library(jsonlite)
-library(dplyr)
-
 get_fonhapo_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
   # Construct the API URL
   url <- sprintf("https://localhost:44369/api/CuboAPI/GetFONHAPO/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) 
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -261,9 +265,6 @@ get_fonhapo_data <- function(anios, clave_estado, clave_municipio, dimensiones) 
 
 # Inventario de Vivienda Solo hay 2022? --------------------------------------------------
 
-library(httr)
-library(jsonlite)
-library(dplyr)
 
 get_inventario_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
@@ -271,15 +272,7 @@ get_inventario_data <- function(anios, clave_estado, clave_municipio, dimensione
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetInventario/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
-  
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
@@ -298,26 +291,14 @@ get_inventario_data <- function(anios, clave_estado, clave_municipio, dimensione
 
 # Registro de Vivienda ----------------------------------------------------
 
-
-library(httr)
-library(jsonlite)
-library(dplyr)
-
 get_registro_data <- function(anios, clave_estado, clave_municipio, dimensiones) {
   
   # Construct the API URL
   url <- sprintf("https://sniiv.sedatu.gob.mx/api/CuboAPI/GetRegistro/%s/%s/%s/%s",
                  anios, clave_estado, clave_municipio, dimensiones)
   
-  # Execute the API request
-  response <- GET(url)
   
-  # Check if the request was successful; if not, an error will be thrown
-  stop_for_status(response)
-  
-  # Parse JSON content into a dataframe
-  df <- fromJSON(rawToChar(response$content)) %>%
-    arrange(año)
+  df <- make_sniiv_api_call(url)
   
   return(df)
 }
