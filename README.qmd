@@ -1,0 +1,48 @@
+---
+title: "README"
+format: gfm
+editor: visual
+---
+
+# Shiny-SNIIV
+
+Dynamically query the open data mexican API of housing indicators
+
+-   [Source of Data: Datos Abiertos SNIIV](https://sniiv.sedatu.gob.mx/Reporte/Datos_abiertos): Choose the "Desarrolladores" tab. ![](images/Screenshot from 2024-01-06 19-57-03.png)
+
+## Aux Data needed for context
+
+ - Clave de entidad federativa
+ - Clave de municipio
+ - Range of years and data to query (Data Quality)
+ - Dimensiones disponibles (valores disponibles)
+
+## **SNIIV APIs:**
+
+| API Name                   | Availability   |
+| -------------------------- | -------------- |
+| API Cubo: Financiamiento   | ✔️              |
+| API Cubo: CONAVI            | ✔️              |
+| API Cubo: FOVISSSTE         | ✔️              |
+| API Cubo: INFONAVIT         | ✔️              |
+| API Cubo: CNBV              | ✔️              |
+| API Cubo: INSUS             | ✔️              |
+| API Cubo: FONHAPO           | ❌              |
+| API Cubo: Inventario de vivienda | ✔️       |
+| API Cubo: Registro de vivienda   | ✔️       |
+
+
+## Description
+
+**TL;DR:**
+
+- APIs (Application Programming Interfaces) in the National Information and Housing Indicators System provide a way to request and execute pre-programmed tasks.
+- These APIs enable users to access information about the housing sector through computer services on the platform.
+- Users can utilize the APIs to query open data from the National System of Information and Housing Indicators (SNIIV).
+- The data obtained through these APIs offers insights into the current state of the system and plays a crucial role in promoting transparency.
+
+The National Information and Housing Indicators System APIs
+
+An API, or Application Programming Interface, is a service that provides definitions and protocols to handle requests for the execution of a pre-programmed task.
+
+The APIs of the National Information and Housing Indicators System allow users to query information from the housing sector through computer services implemented on the platform. This enables users to access open data from the National System of Information and Housing Indicators (SNIIV) and retrieve information about the current state of the system. These data are integral to the transparency model.
